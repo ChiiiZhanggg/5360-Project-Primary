@@ -76,14 +76,14 @@ def _run_core(H, L, C, HH, LL, stp_pct, pv, slpg, bars_back, e0):
                 trades[k] = 1
             else:
                 if buy:
-                    delta += -slpg + pv * (C[k] - HH[k])
+                    delta += -slpg / 2 + pv * (C[k] - HH[k])
                     position = 1
                     traded = True
                     bL = H[k]
                     trades[k] = 0.5
 
                 if sell:
-                    delta += -slpg - pv * (C[k] - LL[k])
+                    delta += -slpg / 2 - pv * (C[k] - LL[k])
                     position = -1
                     traded = True
                     bS = L[k]
@@ -119,7 +119,7 @@ def _run_core(H, L, C, HH, LL, stp_pct, pv, slpg, bars_back, e0):
 
         if position == -1 and not traded:
             buy_long = H[k] >= HH[k]
-            buy_exit = H[k] >= bS * (1 - stp_pct)
+            buy_exit = H[k] >= bS * (1 + stp_pct)
 
             if buy_long and buy_exit:
                 delta += -slpg + 2 * pv * (C[k] - HH[k])
@@ -128,7 +128,7 @@ def _run_core(H, L, C, HH, LL, stp_pct, pv, slpg, bars_back, e0):
                 trades[k] = 1
             else:
                 if buy_exit:
-                    delta += -slpg / 2 + pv * (C[k] - bS * (1 - stp_pct))
+                    delta += -slpg / 2 + pv * (C[k] - bS * (1 + stp_pct))
                     position = 0
                     trades[k] = 0.5
                 if buy_long:
@@ -183,7 +183,7 @@ class RunResult:
         return WindowStats(
             profit=float(self.E[i1] - self.E[i0]),
             worst_dd=float(self.DD[i0 : i1 + 1].min()),
-            stdev=float(np.std(pnl)),
+            stdev=float(np.std(pnl, ddof=1)),
             trades=float(self.trades[i0 : i1 + 1].sum()),
         )
 
@@ -232,8 +232,8 @@ def load_hlv_csv(path):
 
     return (
         dt.values.astype("datetime64[m]"),
-        df["High"].to_numpy(dtype=np.float64),
         df["Low"].to_numpy(dtype=np.float64),
+        df["High"].to_numpy(dtype=np.float64),
         df["Close"].to_numpy(dtype=np.float64),
     )
 

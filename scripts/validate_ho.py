@@ -27,7 +27,7 @@ TEST_XLSX = ROOT / "instruction_and_data" / "HO MatLab Test.xlsx"
 
 # HO parameters from main.m
 PV = 42_000.0
-SLPG = 47.0
+SLPG = 47.0 * 2
 BARS_BACK = 17001
 
 E0 = 100000.0
@@ -139,7 +139,7 @@ def main():
         t1 = time.time()
 
         res = run_strategy(H, L, C, chn_len=L_, stp_pct=S, pv=PV, slpg=SLPG,
-                           bars_back=BARS_BACK, e0=E0)
+                           e0=E0)
         wis = res.window_stats(os_lo, os_hi)
         wos = res.window_stats(is_lo, is_hi)
 
