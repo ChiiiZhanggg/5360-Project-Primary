@@ -1,18 +1,5 @@
-# try several pseudo-code-literal interpretations of the trailing stop.
+# okay so i have talked to prof and was told yeah the pseudocode and main.m are a bit diff we can choose whatever we want, so we go for the main.m version.
 #
-# pseudo-code (BasicTradingSystems.doc):
-#     If MarketPosition>0 then begin
-#         PrevPeak = EntryPrice;
-#         if Close > PrevPeak then PrevPeak = Close;
-#         Sell TradeSize next bar at PrevPeak*(1-StpPct) Stop;
-#     end
-#
-# variants:
-#   A. main.m: running max of High since entry, init to H[entry]
-#   B. running max of Close, init to HH[entry] (=EntryPrice)
-#   C. per-bar max(EntryPrice, Close(k)), no memory (literal pseudo-code)
-#   D. running max of Close, init to H[entry]
-#   E. running max of High, init to HH[entry]
 
 import sys
 from pathlib import Path
