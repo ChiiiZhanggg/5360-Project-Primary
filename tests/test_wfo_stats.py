@@ -45,19 +45,41 @@ def test_compute_stats_uses_return_series_and_conserved_trade_pnl():
     assert stats.profit_factor == pytest.approx(12.0 / 2.0)
 
 
-def test_iter_quarters_respects_end_as_latest_os_end():
+def test_iter_quarters_yields_uniform_bar_count_windows():
     dt = pd.date_range("2000-01-01", "2011-12-31", freq="D").values
     cfg = WFOConfig(is_years=4, os_months=3)
 
-    tasks = list(iter_quarters(dt, cfg, start="2010-01-01", end="2010-04-01"))
+    tasks = list(iter_quarters(dt, cfg))
 
-    assert [task[0] for task in tasks] == ["2010Q1"]
+    assert tasks, "expected at least one window"
+    is_lengths = {is_hi - is_lo + 1 for _, is_lo, is_hi, _, _ in tasks}
+    os_lengths = {os_hi - os_lo + 1 for _, _, _, os_lo, os_hi in tasks}
+    assert len(is_lengths) == 1, "IS windows must all have identical bar count"
+    assert len(os_lengths) == 1, "OS windows must all have identical bar count"
+    starts = [os_lo for _, _, _, os_lo, _ in tasks]
+    deltas = np.diff(starts)
+    assert all(d == next(iter(os_lengths)) for d in deltas), "OS windows must be contiguous"
 
 
-def test_iter_quarters_supports_monthly_tau_without_skipping_months():
+def test_iter_quarters_caps_os_end_at_end_arg():
+    dt = pd.date_range("2000-01-01", "2011-12-31", freq="D").values
+    cfg = WFOConfig(is_years=4, os_months=3)
+
+    tasks = list(iter_quarters(dt, cfg, end="2010-04-01"))
+
+    assert tasks, "expected at least one window"
+    last_os_end = pd.Timestamp(dt[tasks[-1][4]])
+    assert last_os_end <= pd.Timestamp("2010-04-01")
+
+
+def test_iter_quarters_supports_monthly_tau():
     dt = pd.date_range("2000-01-01", "2011-12-31", freq="D").values
     cfg = WFOConfig(is_years=4, os_months=1)
 
-    tasks = list(iter_quarters(dt, cfg, start="2010-01-01", end="2010-04-01"))
+    tasks = list(iter_quarters(dt, cfg))
 
-    assert [task[0] for task in tasks] == ["2010-01", "2010-02", "2010-03"]
+    assert tasks, "expected at least one window"
+    os_lengths = {os_hi - os_lo + 1 for _, _, _, os_lo, os_hi in tasks}
+    assert len(os_lengths) == 1
+    bars_per_window = next(iter(os_lengths))
+    assert 28 <= bars_per_window <= 32, f"~one month of daily bars, got {bars_per_window}"
